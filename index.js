@@ -82,18 +82,30 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
+        app.get('/userverified', async (req, res) => {
+            try {
+                const email = req.query.email;
+                const query = { email: email }
+                const result = await userCollection.findOne(query);
+                res.send(result)
 
-        app.get('/userupdate', async (req, res) => {
-            const filter = {};
-            const option = { upsert: true }
-            const upDoc = {
-                $set: {
-                    status: 'true'
-                }
             }
-            const result = await productsCollection.updateMany(filter, upDoc, option);
-            res.send(result)
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
         })
+
+        // // app.get('/userupdate', async (req, res) => {
+        // //     const filter = {};
+        // //     const option = { upsert: true }
+        // //     const upDoc = {
+        // //         $set: {
+        // //             status: 'true'
+        // //         }
+        // //     }
+        // //     const result = await productsCollection.updateMany(filter, upDoc, option);
+        // //     res.send(result)
+        // })
 
 
 
