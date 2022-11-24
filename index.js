@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -24,8 +24,20 @@ async function run() {
     try {
         const userCollection = client.db("sell-buy-laptop").collection("user");
         const cetegoryCollection = client.db("sell-buy-laptop").collection("cetegorys");
+        const productsCollection = client.db("sell-buy-laptop").collection("products");
 
 
+        app.post('/product', async (req, res) => {
+            try {
+                const product = req.body;
+                const result = await productsCollection.insertOne(product);
+                res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
         app.post('/user', async (req, res) => {
             try {
                 const user = req.body;
@@ -36,6 +48,24 @@ async function run() {
                 }
                 const result = await userCollection.insertOne(user);
                 res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+        app.get('/cetegoryitem/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const query = { _id: ObjectId(id) }
+                const cetegory = await cetegoryCollection.findOne(query);
+                if (!cetegory) {
+                    return
+                }
+                const cetegoryName = cetegory.name;
+                const filter = { brand: cetegoryName };
+                const cetegoryItem = await productsCollection.find(filter).toArray();
+                res.send(cetegoryItem)
 
             }
             catch {
@@ -53,17 +83,17 @@ async function run() {
             }
         })
 
-        // app.get('/userupdate', async (req, res) => {
-        //     const filter = {};
-        //     const option = { upsert: true }
-        //     const upDoc = {
-        //         $set: {
-        //             verified: 'false'
-        //         }
-        //     }
-        //     const result = await userCollection.updateMany(filter, upDoc, option);
-        //     res.send(result)
-        // })
+        app.get('/userupdate', async (req, res) => {
+            const filter = {};
+            const option = { upsert: true }
+            const upDoc = {
+                $set: {
+                    status: 'true'
+                }
+            }
+            const result = await productsCollection.updateMany(filter, upDoc, option);
+            res.send(result)
+        })
 
 
 
