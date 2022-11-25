@@ -25,12 +25,31 @@ async function run() {
         const userCollection = client.db("sell-buy-laptop").collection("user");
         const cetegoryCollection = client.db("sell-buy-laptop").collection("cetegorys");
         const productsCollection = client.db("sell-buy-laptop").collection("products");
+        const wishListCollection = client.db("sell-buy-laptop").collection("wishList");
 
 
         app.post('/product', async (req, res) => {
             try {
                 const product = req.body;
                 const result = await productsCollection.insertOne(product);
+                res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+
+        app.post('/addwishlist', async (req, res) => {
+            try {
+                const wishListProduct = req.body;
+                const filter = { wishlistUser: wishListProduct.wishlistUser }
+                const findWishList = await wishListCollection.findOne(filter);
+
+                if (findWishList && wishListProduct.productId === findWishList.productId) {
+                    return res.send({ status: false, message: "That Product Already Added Your My WishList" })
+                }
+                const result = await wishListCollection.insertOne(wishListProduct);
                 res.send(result)
 
             }
@@ -82,11 +101,35 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
+        app.get('/userwishlist', async (req, res) => {
+            try {
+                const email = req.query.email;
+                const filter = { wishlistUser: email }
+                const result = await wishListCollection.find(filter).toArray();
+                res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
         app.get('/userverified', async (req, res) => {
             try {
                 const email = req.query.email;
                 const query = { email: email }
                 const result = await userCollection.findOne(query);
+                res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+        app.get('/productstatus', async (req, res) => {
+            try {
+                const id = req.query.id;
+                const query = { _id: ObjectId(id) }
+                const result = await productsCollection.findOne(query);
                 res.send(result)
 
             }
