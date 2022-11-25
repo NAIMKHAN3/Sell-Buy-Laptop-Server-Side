@@ -106,6 +106,18 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
+        app.get('/allseller', async (req, res) => {
+            try {
+                const query = { role: 'seller' }
+                const result = await userCollection.find(query).toArray();
+                res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+
 
         // // app.get('/userupdate', async (req, res) => {
         // //     const filter = {};
