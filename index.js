@@ -27,6 +27,7 @@ async function run() {
         const productsCollection = client.db("sell-buy-laptop").collection("products");
         const wishListCollection = client.db("sell-buy-laptop").collection("wishList");
         const reportProductsCollection = client.db("sell-buy-laptop").collection("reportproducts");
+        const bookingCollection = client.db("sell-buy-laptop").collection("booking");
 
 
         app.post('/product', async (req, res) => {
@@ -46,12 +47,30 @@ async function run() {
                 const wishListProduct = req.body;
                 const filter = { wishlistUser: wishListProduct.wishlistUser, productId: wishListProduct.productId }
                 const findWishList = await wishListCollection.findOne(filter);
-                console.log(findWishList)
+
 
                 if (findWishList) {
                     return res.send({ status: false, message: "That Product Already Added Your My WishList" })
                 }
                 const result = await wishListCollection.insertOne(wishListProduct);
+                res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+        app.post('/addmybooking', async (req, res) => {
+            try {
+                const myBooking = req.body;
+                const filter = { useremail: myBooking.useremail, productId: myBooking.productId }
+                const findUserBooking = await bookingCollection.findOne(filter);
+
+
+                if (findUserBooking) {
+                    return res.send({ status: false, message: "Already that Product booked You" })
+                }
+                const result = await bookingCollection.insertOne(myBooking);
                 res.send(result)
 
             }
@@ -216,7 +235,6 @@ async function run() {
             try {
                 const query = { advertice: 'true', status: 'true' }
                 const result = await productsCollection.find(query).toArray();
-                console.log(result)
                 res.send(result)
             }
             catch {
