@@ -26,6 +26,7 @@ async function run() {
         const cetegoryCollection = client.db("sell-buy-laptop").collection("cetegorys");
         const productsCollection = client.db("sell-buy-laptop").collection("products");
         const wishListCollection = client.db("sell-buy-laptop").collection("wishList");
+        const reportProductsCollection = client.db("sell-buy-laptop").collection("reportproducts");
 
 
         app.post('/product', async (req, res) => {
@@ -43,13 +44,43 @@ async function run() {
         app.post('/addwishlist', async (req, res) => {
             try {
                 const wishListProduct = req.body;
-                const filter = { wishlistUser: wishListProduct.wishlistUser }
-                const findWishList = await wishListCollection.findOne(filter);
+                const filter = { wishlistUser: wishListProduct.wishlistUser, productId: wishListProduct.productId }
+                const findWishList = await wishListCollection.find(filter);
 
-                if (findWishList && wishListProduct.productId === findWishList.productId) {
+                if (findWishList) {
                     return res.send({ status: false, message: "That Product Already Added Your My WishList" })
                 }
                 const result = await wishListCollection.insertOne(wishListProduct);
+                res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+        app.post('/addreportproduct', async (req, res) => {
+            try {
+                const reportProduct = req.body;
+                const filter = { reporteduser: reportProduct.reporteduser, productId: reportProduct.productId }
+                const findreportproduct = await reportProductsCollection.findOne(filter);
+                // console.log(reportProduct)
+                console.log(findreportproduct)
+
+                if (findreportproduct) {
+                    return res.send({ status: false, message: "That Product Already Added Your My WishList" })
+                }
+                const result = await reportProductsCollection.insertOne(reportProduct);
+                res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+
+        app.get('/allreportitem', async (req, res) => {
+            try {
+                const result = await reportProductsCollection.find({}).toArray();
                 res.send(result)
 
             }
@@ -170,6 +201,18 @@ async function run() {
             catch {
                 res.send({ status: false, message: "cannot insert user" })
             }
+        })
+
+        app.delete('/deletereport', async (req, res) => {
+            const id = req.query.id;
+            const email = req.query.email;
+            // const productId = req.query.productId
+            // const query = { productId: productId, selleremail: email }
+            // const deleted = await wishListCollection.deleteOne(query);
+            // console.log(deleted)
+            const filter = { _id: ObjectId(id) }
+            const result = await reportProductsCollection.deleteOne(filter);
+            res.send(result)
         })
 
         // // app.get('/userupdate', async (req, res) => {
