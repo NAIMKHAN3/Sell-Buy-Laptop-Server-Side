@@ -63,8 +63,6 @@ async function run() {
                 const reportProduct = req.body;
                 const filter = { reporteduser: reportProduct.reporteduser, productId: reportProduct.productId }
                 const findreportproduct = await reportProductsCollection.findOne(filter);
-                // console.log(reportProduct)
-                console.log(findreportproduct)
 
                 if (findreportproduct) {
                     return res.send({ status: false, message: "That Product Already Added Your My WishList" })
@@ -144,6 +142,18 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
+        app.get('/userproduct', async (req, res) => {
+            try {
+                const email = req.query.email;
+                const filter = { selleremail: email }
+                const result = await productsCollection.find(filter).toArray();
+                res.send(result)
+
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
         app.get('/userverified', async (req, res) => {
             try {
                 const email = req.query.email;
@@ -196,7 +206,27 @@ async function run() {
                 const query = {}
                 const result = await userCollection.find(query).toArray();
                 res.send(result)
-
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+        app.put('/updateproduct', async (req, res) => {
+            try {
+                const id = req.query.id;
+                const find = await productsCollection.findOne({ _id: ObjectId(id) });
+                if (find.advertice === 'true') {
+                    return res.send({ status: false, message: `Already ${find.brand} ${find.model} Added avertice` })
+                }
+                const filter = { _id: ObjectId(id) };
+                const option = { upsert: true }
+                const upDoc = {
+                    $set: {
+                        advertice: 'true'
+                    }
+                }
+                const result = await productsCollection.updateMany(filter, upDoc, option);
+                res.send(result)
             }
             catch {
                 res.send({ status: false, message: "cannot insert user" })
@@ -212,6 +242,12 @@ async function run() {
             // console.log(deleted)
             const filter = { _id: ObjectId(id) }
             const result = await reportProductsCollection.deleteOne(filter);
+            res.send(result)
+        })
+        app.delete('/deleteproduct', async (req, res) => {
+            const id = req.query.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await productsCollection.deleteOne(filter);
             res.send(result)
         })
 
