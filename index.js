@@ -45,7 +45,8 @@ async function run() {
             try {
                 const wishListProduct = req.body;
                 const filter = { wishlistUser: wishListProduct.wishlistUser, productId: wishListProduct.productId }
-                const findWishList = await wishListCollection.find(filter);
+                const findWishList = await wishListCollection.findOne(filter);
+                console.log(findWishList)
 
                 if (findWishList) {
                     return res.send({ status: false, message: "That Product Already Added Your My WishList" })
@@ -65,7 +66,7 @@ async function run() {
                 const findreportproduct = await reportProductsCollection.findOne(filter);
 
                 if (findreportproduct) {
-                    return res.send({ status: false, message: "That Product Already Added Your My WishList" })
+                    return res.send({ status: false, message: "That Product Already Added Report To Admin" })
                 }
                 const result = await reportProductsCollection.insertOne(reportProduct);
                 res.send(result)
@@ -211,6 +212,51 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
+        app.get('/adverticeproduct', async (req, res) => {
+            try {
+                const query = { advertice: 'true', status: 'true' }
+                const result = await productsCollection.find(query).toArray();
+                console.log(result)
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+        app.put('/verifyuser', async (req, res) => {
+            try {
+                const id = req.query.id;
+                const filter = { _id: ObjectId(id) };
+                const option = { upsert: true }
+                const upDoc = {
+                    $set: {
+                        verified: 'true'
+                    }
+                }
+                const result = await userCollection.updateOne(filter, upDoc, option);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+        app.put('/makeadmin', async (req, res) => {
+            try {
+                const id = req.query.id;
+                const filter = { _id: ObjectId(id) };
+                const option = { upsert: true }
+                const upDoc = {
+                    $set: {
+                        role: 'admin'
+                    }
+                }
+                const result = await userCollection.updateOne(filter, upDoc, option);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
         app.put('/updateproduct', async (req, res) => {
             try {
                 const id = req.query.id;
@@ -244,10 +290,18 @@ async function run() {
             const result = await reportProductsCollection.deleteOne(filter);
             res.send(result)
         })
+
         app.delete('/deleteproduct', async (req, res) => {
             const id = req.query.id;
             const filter = { _id: ObjectId(id) }
             const result = await productsCollection.deleteOne(filter);
+            res.send(result)
+        })
+
+        app.delete('/deleteuser', async (req, res) => {
+            const id = req.query.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await userCollection.deleteOne(filter);
             res.send(result)
         })
 
