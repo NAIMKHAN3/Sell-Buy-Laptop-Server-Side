@@ -241,6 +241,17 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
+        app.get('/mybooking', async (req, res) => {
+            try {
+                const email = req.query.email;
+                const query = { useremail: email }
+                const result = await bookingCollection.find(query).toArray();
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
         app.put('/verifyuser', async (req, res) => {
             try {
                 const id = req.query.id;
@@ -298,12 +309,15 @@ async function run() {
         })
 
         app.delete('/deletereport', async (req, res) => {
+            const productId = req.query.productId
+            productId
+            const query = { _id: ObjectId(productId) }
+            const productDelete = await productsCollection.deleteOne(query);
+            const deleted = { productId: productId }
+            const deletedById = await bookingCollection.deleteMany(deleted)
+            const deletedByIds = await wishListCollection.deleteMany(deleted)
+            console.log(productId)
             const id = req.query.id;
-            const email = req.query.email;
-            // const productId = req.query.productId
-            // const query = { productId: productId, selleremail: email }
-            // const deleted = await wishListCollection.deleteOne(query);
-            // console.log(deleted)
             const filter = { _id: ObjectId(id) }
             const result = await reportProductsCollection.deleteOne(filter);
             res.send(result)
@@ -311,11 +325,21 @@ async function run() {
 
         app.delete('/deleteproduct', async (req, res) => {
             const id = req.query.id;
+            const deleted = { productId: id }
+            const deletedById = await bookingCollection.deleteMany(deleted)
+            const deletedByIdw = await wishListCollection.deleteMany(deleted)
+            const deletedByIdA = await reportProductsCollection.deleteMany(deleted)
             const filter = { _id: ObjectId(id) }
             const result = await productsCollection.deleteOne(filter);
             res.send(result)
         })
 
+        app.delete('/deletebooking', async (req, res) => {
+            const id = req.query.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await bookingCollection.deleteOne(filter);
+            res.send(result)
+        })
         app.delete('/deleteuser', async (req, res) => {
             const id = req.query.id;
             const filter = { _id: ObjectId(id) }
