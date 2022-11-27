@@ -480,9 +480,7 @@ async function run() {
                 const bookingId = req.query.bookingId;
 
                 const deleteProduct = await productsCollection.deleteOne({ _id: ObjectId(productId) })
-                console.log(deleteProduct)
                 const deleteBooking = await bookingCollection.deleteOne({ _id: ObjectId(bookingId) })
-                console.log(deleteBooking)
             }
             catch {
                 res.send({ status: false, message: "cannot delete product user" })
@@ -491,17 +489,6 @@ async function run() {
 
         })
 
-        // // app.get('/userupdate', async (req, res) => {
-        // //     const filter = {};
-        // //     const option = { upsert: true }
-        // //     const upDoc = {
-        // //         $set: {
-        // //             status: 'true'
-        // //         }
-        // //     }
-        // //     const result = await productsCollection.updateMany(filter, upDoc, option);
-        // //     res.send(result)
-        // })
 
 
 
