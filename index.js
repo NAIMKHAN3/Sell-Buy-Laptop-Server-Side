@@ -181,7 +181,6 @@ async function run() {
 
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
-            console.log(email)
             const user = await userCollection.findOne({ email: email })
             if (user) {
                 const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '7d' })
@@ -337,7 +336,7 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.get('/mybuyer', async (req, res) => {
+        app.get('/mybuyer', verifyJWT, verifySeller, async (req, res) => {
             try {
                 const email = req.query.email;
                 const query = { selleremail: email }
@@ -434,9 +433,8 @@ async function run() {
                 const query = { _id: ObjectId(productId) }
                 const productDelete = await productsCollection.deleteOne(query);
                 const deleted = { productId: productId }
-                const deletedById = await bookingCollection.deleteMany(deleted)
-                const deletedByIds = await wishListCollection.deleteMany(deleted)
-                console.log(productId)
+                const deletedById = await bookingCollection.deleteMany(deleted);
+                const deletedByIds = await wishListCollection.deleteMany(deleted);
                 const id = req.query.id;
                 const filter = { _id: ObjectId(id) }
                 const result = await reportProductsCollection.deleteOne(filter);
