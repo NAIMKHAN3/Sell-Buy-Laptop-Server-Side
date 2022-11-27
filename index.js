@@ -327,10 +327,21 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.get('/adverticeproduct', verifyJWT, async (req, res) => {
+        app.get('/adverticeproduct', async (req, res) => {
             try {
                 const query = { advertice: 'true', status: 'true' }
                 const result = await productsCollection.find(query).limit(5).toArray();
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+        app.get('/mybuyer', async (req, res) => {
+            try {
+                const email = req.query.email;
+                const query = { selleremail: email }
+                const result = await paymentCollection.find(query).toArray();
                 res.send(result)
             }
             catch {
