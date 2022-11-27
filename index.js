@@ -5,6 +5,8 @@ require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SK);
 const app = express();
 const port = process.env.PORT || 5000;
+const jwt = require("jsonwebtoken")
+const token = process.env.ACCESS_TOKEN;
 
 
 
@@ -15,6 +17,22 @@ app.get('/', (req, res) => {
     res.send({ status: true, Message: 'Sell Buy Laptop Server Is Running' })
 })
 
+
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers?.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'unauthorized access' })
+    }
+    const token = authHeader.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'unauthorized access' })
+        }
+        req.decoded = decoded;
+    })
+
+    next();
+}
 
 
 
@@ -32,7 +50,39 @@ async function run() {
         const paymentCollection = client.db("sell-buy-laptop").collection("payment");
 
 
-        app.post('/product', async (req, res) => {
+        const verifyAdmin = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await userCollection.findOne(query);
+
+            if (user?.role !== 'admin') {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next();
+        }
+        const verifyBuyer = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await userCollection.findOne(query);
+
+            if (user?.role !== 'buyer') {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next();
+        }
+        const verifySeller = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await userCollection.findOne(query);
+
+            if (user?.role !== 'seller') {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next();
+        }
+
+
+        app.post('/product', verifyJWT, verifySeller, async (req, res) => {
             try {
                 const product = req.body;
                 const result = await productsCollection.insertOne(product);
@@ -44,7 +94,7 @@ async function run() {
             }
         })
 
-        app.post('/addwishlist', async (req, res) => {
+        app.post('/addwishlist', verifyJWT, verifyBuyer, async (req, res) => {
             try {
                 const wishListProduct = req.body;
                 const filter = { wishlistUser: wishListProduct.wishlistUser, productId: wishListProduct.productId }
@@ -62,7 +112,7 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.post('/addmybooking', async (req, res) => {
+        app.post('/addmybooking', verifyJWT, verifyBuyer, async (req, res) => {
             try {
                 const myBooking = req.body;
                 const filter = { useremail: myBooking.useremail, productId: myBooking.productId }
@@ -80,17 +130,19 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.post('/payment', async (req, res) => {
+        app.post('/payment', verifyJWT, verifyBuyer, async (req, res) => {
             try {
                 const payment = req.body;
+                const { productId, bookingId } = payment;
                 const result = await paymentCollection.insertOne(payment);
                 res.send(result)
+
             }
             catch {
                 res.send({ status: false, message: "cannot payment success" })
             }
         })
-        app.post("/create-payment-intent", async (req, res) => {
+        app.post("/create-payment-intent", verifyJWT, async (req, res) => {
             const bookingData = req.body;
             const price = bookingData.price;
             const amount = price * 100;
@@ -108,7 +160,7 @@ async function run() {
             });
         });
 
-        app.post('/addreportproduct', async (req, res) => {
+        app.post('/addreportproduct', verifyJWT, verifyBuyer, async (req, res) => {
             try {
                 const reportProduct = req.body;
                 const filter = { reporteduser: reportProduct.reporteduser, productId: reportProduct.productId }
@@ -126,9 +178,23 @@ async function run() {
             }
         })
 
-        app.get('/allreportitem', async (req, res) => {
+
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            console.log(email)
+            const user = await userCollection.findOne({ email: email })
+            if (user) {
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '7d' })
+                res.send({ token })
+            }
+            else {
+                res.status(403).send({ token: '' })
+            }
+        })
+
+        app.get('/allreportitem', verifyJWT, verifyAdmin, async (req, res) => {
             try {
-                const result = await reportProductsCollection.find({}).toArray();
+                const result = await (await reportProductsCollection.find({}).toArray()).reverse();
                 res.send(result)
 
             }
@@ -180,11 +246,11 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.get('/userwishlist', async (req, res) => {
+        app.get('/userwishlist', verifyJWT, verifyBuyer, async (req, res) => {
             try {
                 const email = req.query.email;
                 const filter = { wishlistUser: email }
-                const result = await wishListCollection.find(filter).toArray();
+                const result = await (await wishListCollection.find(filter).toArray()).reverse();
                 res.send(result)
 
             }
@@ -192,11 +258,11 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.get('/userproduct', async (req, res) => {
+        app.get('/userproduct', verifyJWT, verifySeller, async (req, res) => {
             try {
                 const email = req.query.email;
                 const filter = { selleremail: email }
-                const result = await productsCollection.find(filter).toArray();
+                const result = await (await productsCollection.find(filter).toArray()).reverse();
                 res.send(result)
 
             }
@@ -229,7 +295,7 @@ async function run() {
             }
         })
 
-        app.get('/allbuyer', async (req, res) => {
+        app.get('/allbuyer', verifyJWT, verifyAdmin, async (req, res) => {
             try {
                 const query = { role: 'buyer' }
                 const result = await userCollection.find(query).toArray();
@@ -240,7 +306,7 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.get('/allseller', async (req, res) => {
+        app.get('/allseller', verifyJWT, verifyAdmin, async (req, res) => {
             try {
                 const query = { role: 'seller' }
                 const result = await userCollection.find(query).toArray();
@@ -251,7 +317,7 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.get('/alluser', async (req, res) => {
+        app.get('/alluser', verifyJWT, verifyAdmin, async (req, res) => {
             try {
                 const query = {}
                 const result = await userCollection.find(query).toArray();
@@ -261,17 +327,17 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.get('/adverticeproduct', async (req, res) => {
+        app.get('/adverticeproduct', verifyJWT, async (req, res) => {
             try {
                 const query = { advertice: 'true', status: 'true' }
-                const result = await productsCollection.find(query).toArray();
+                const result = await productsCollection.find(query).limit(5).toArray();
                 res.send(result)
             }
             catch {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.get('/payment/:id', async (req, res) => {
+        app.get('/payment/:id', verifyJWT, verifyBuyer, async (req, res) => {
             try {
                 const id = req.params.id;
 
@@ -283,18 +349,18 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.get('/mybooking', async (req, res) => {
+        app.get('/mybooking', verifyJWT, verifyBuyer, async (req, res) => {
             try {
                 const email = req.query.email;
                 const query = { useremail: email }
-                const result = await bookingCollection.find(query).toArray();
+                const result = await (await bookingCollection.find(query).toArray()).reverse();
                 res.send(result)
             }
             catch {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.put('/verifyuser', async (req, res) => {
+        app.put('/verifyuser', verifyJWT, verifyAdmin, async (req, res) => {
             try {
                 const id = req.query.id;
                 const filter = { _id: ObjectId(id) };
@@ -311,7 +377,7 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
-        app.put('/makeadmin', async (req, res) => {
+        app.put('/makeadmin', verifyJWT, verifyAdmin, async (req, res) => {
             try {
                 const id = req.query.id;
                 const filter = { _id: ObjectId(id) };
@@ -325,10 +391,10 @@ async function run() {
                 res.send(result)
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot make admin" })
             }
         })
-        app.put('/updateproduct', async (req, res) => {
+        app.put('/updateproduct', verifySeller, async (req, res) => {
             try {
                 const id = req.query.id;
                 const find = await productsCollection.findOne({ _id: ObjectId(id) });
@@ -350,43 +416,79 @@ async function run() {
             }
         })
 
-        app.delete('/deletereport', async (req, res) => {
-            const productId = req.query.productId
-            productId
-            const query = { _id: ObjectId(productId) }
-            const productDelete = await productsCollection.deleteOne(query);
-            const deleted = { productId: productId }
-            const deletedById = await bookingCollection.deleteMany(deleted)
-            const deletedByIds = await wishListCollection.deleteMany(deleted)
-            console.log(productId)
-            const id = req.query.id;
-            const filter = { _id: ObjectId(id) }
-            const result = await reportProductsCollection.deleteOne(filter);
-            res.send(result)
+        app.delete('/deletereport', verifyJWT, verifyAdmin, async (req, res) => {
+            try {
+                const productId = req.query.productId
+                productId
+                const query = { _id: ObjectId(productId) }
+                const productDelete = await productsCollection.deleteOne(query);
+                const deleted = { productId: productId }
+                const deletedById = await bookingCollection.deleteMany(deleted)
+                const deletedByIds = await wishListCollection.deleteMany(deleted)
+                console.log(productId)
+                const id = req.query.id;
+                const filter = { _id: ObjectId(id) }
+                const result = await reportProductsCollection.deleteOne(filter);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot delete report" })
+            }
         })
 
-        app.delete('/deleteproduct', async (req, res) => {
-            const id = req.query.id;
-            const deleted = { productId: id }
-            const deletedById = await bookingCollection.deleteMany(deleted)
-            const deletedByIdw = await wishListCollection.deleteMany(deleted)
-            const deletedByIdA = await reportProductsCollection.deleteMany(deleted)
-            const filter = { _id: ObjectId(id) }
-            const result = await productsCollection.deleteOne(filter);
-            res.send(result)
+        app.delete('/deleteproduct', verifyJWT, verifySeller, async (req, res) => {
+            try {
+                const id = req.query.id;
+                const deleted = { productId: id }
+                const deletedById = await bookingCollection.deleteMany(deleted)
+                const deletedByIdw = await wishListCollection.deleteMany(deleted)
+                const deletedByIdA = await reportProductsCollection.deleteMany(deleted)
+                const filter = { _id: ObjectId(id) }
+                const result = await productsCollection.deleteOne(filter);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot delete product" })
+            }
         })
 
-        app.delete('/deletebooking', async (req, res) => {
-            const id = req.query.id;
-            const filter = { _id: ObjectId(id) }
-            const result = await bookingCollection.deleteOne(filter);
-            res.send(result)
+        app.delete('/deletebooking', verifyJWT, verifyBuyer, async (req, res) => {
+            try {
+                const id = req.query.id;
+                const filter = { _id: ObjectId(id) }
+                const result = await bookingCollection.deleteOne(filter);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot delete booking" })
+            }
         })
-        app.delete('/deleteuser', async (req, res) => {
-            const id = req.query.id;
-            const filter = { _id: ObjectId(id) }
-            const result = await userCollection.deleteOne(filter);
-            res.send(result)
+        app.delete('/deleteuser', verifyJWT, verifyAdmin, async (req, res) => {
+            try {
+                const id = req.query.id;
+                const filter = { _id: ObjectId(id) }
+                const result = await userCollection.deleteOne(filter);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot delete user" })
+            }
+        })
+        app.delete('/paymentproductdelete', async (req, res) => {
+            try {
+                const productId = req.query.productId;
+                const bookingId = req.query.bookingId;
+
+                const deleteProduct = await productsCollection.deleteOne({ _id: ObjectId(productId) })
+                console.log(deleteProduct)
+                const deleteBooking = await bookingCollection.deleteOne({ _id: ObjectId(bookingId) })
+                console.log(deleteBooking)
+            }
+            catch {
+                res.send({ status: false, message: "cannot delete product user" })
+            }
+
+
         })
 
         // // app.get('/userupdate', async (req, res) => {
