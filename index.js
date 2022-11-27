@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SK);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -28,6 +29,7 @@ async function run() {
         const wishListCollection = client.db("sell-buy-laptop").collection("wishList");
         const reportProductsCollection = client.db("sell-buy-laptop").collection("reportproducts");
         const bookingCollection = client.db("sell-buy-laptop").collection("booking");
+        const paymentCollection = client.db("sell-buy-laptop").collection("payment");
 
 
         app.post('/product', async (req, res) => {
@@ -78,6 +80,34 @@ async function run() {
                 res.send({ status: false, message: "cannot insert user" })
             }
         })
+        app.post('/payment', async (req, res) => {
+            try {
+                const payment = req.body;
+                const result = await paymentCollection.insertOne(payment);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot payment success" })
+            }
+        })
+        app.post("/create-payment-intent", async (req, res) => {
+            const bookingData = req.body;
+            const price = bookingData.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
         app.post('/addreportproduct', async (req, res) => {
             try {
                 const reportProduct = req.body;
@@ -235,6 +265,18 @@ async function run() {
             try {
                 const query = { advertice: 'true', status: 'true' }
                 const result = await productsCollection.find(query).toArray();
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot insert user" })
+            }
+        })
+        app.get('/payment/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+
+                const query = { _id: ObjectId(id) }
+                const result = await bookingCollection.findOne(query);
                 res.send(result)
             }
             catch {
