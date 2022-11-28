@@ -330,7 +330,7 @@ async function run() {
         app.get('/adverticeproduct', async (req, res) => {
             try {
                 const query = { advertice: 'true', status: 'true' }
-                const result = await productsCollection.find(query).limit(5).toArray();
+                const result = await productsCollection.find(query).limit(6).toArray();
                 res.send(result)
             }
             catch {
