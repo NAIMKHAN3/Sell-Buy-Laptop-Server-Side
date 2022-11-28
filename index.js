@@ -29,6 +29,7 @@ function verifyJWT(req, res, next) {
             return res.status(403).send({ message: 'unauthorized access' })
         }
         req.decoded = decoded;
+        console.log(decoded)
     })
 
     next();
@@ -71,7 +72,7 @@ async function run() {
             next();
         }
         const verifySeller = async (req, res, next) => {
-            const decodedEmail = req.decoded.email;
+            const decodedEmail = req.decoded?.email;
             const query = { email: decodedEmail };
             const user = await userCollection.findOne(query);
 
@@ -438,7 +439,7 @@ async function run() {
                 res.send({ status: false, message: "cannot make admin" })
             }
         })
-        app.put('/updateproduct', verifySeller, async (req, res) => {
+        app.put('/updateproduct', verifyJWT, verifySeller, async (req, res) => {
             try {
                 const id = req.query.id;
                 const find = await productsCollection.findOne({ _id: ObjectId(id) });
