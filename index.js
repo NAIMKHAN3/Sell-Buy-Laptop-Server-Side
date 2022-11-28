@@ -90,7 +90,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot added a product" })
             }
         })
 
@@ -109,7 +109,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot add wishlist" })
             }
         })
         app.post('/addmybooking', verifyJWT, verifyBuyer, async (req, res) => {
@@ -127,7 +127,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot adding the booking" })
             }
         })
         app.post('/payment', verifyJWT, verifyBuyer, async (req, res) => {
@@ -174,7 +174,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot Report to admin" })
             }
         })
 
@@ -198,7 +198,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot Report item" })
             }
         })
         app.post('/user', async (req, res) => {
@@ -232,7 +232,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot cetegory item" })
             }
         })
         app.get('/cetegorys', async (req, res) => {
@@ -242,7 +242,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot cetegory item" })
             }
         })
         app.get('/userwishlist', verifyJWT, verifyBuyer, async (req, res) => {
@@ -254,7 +254,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot Wishlist" })
             }
         })
         app.get('/userproduct', verifyJWT, verifySeller, async (req, res) => {
@@ -266,7 +266,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot Product" })
             }
         })
         app.get('/userverified', async (req, res) => {
@@ -278,7 +278,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot user verified" })
             }
         })
         app.get('/productstatus', async (req, res) => {
@@ -290,7 +290,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot product status" })
             }
         })
 
@@ -302,7 +302,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot buyers user" })
             }
         })
         app.get('/allseller', verifyJWT, verifyAdmin, async (req, res) => {
@@ -313,7 +313,7 @@ async function run() {
 
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot Seller user" })
             }
         })
         app.get('/alluser', verifyJWT, verifyAdmin, async (req, res) => {
@@ -323,7 +323,7 @@ async function run() {
                 res.send(result)
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot user" })
             }
         })
         app.get('/adverticeproduct', async (req, res) => {
@@ -333,7 +333,7 @@ async function run() {
                 res.send(result)
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot advertise product" })
             }
         })
         app.get('/mybuyer', verifyJWT, verifySeller, async (req, res) => {
@@ -344,7 +344,7 @@ async function run() {
                 res.send(result)
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot buyer" })
             }
         })
         app.get('/payment/:id', verifyJWT, verifyBuyer, async (req, res) => {
@@ -356,7 +356,41 @@ async function run() {
                 res.send(result)
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot payment" })
+            }
+        })
+        app.get('/checkadmin', verifyJWT, async (req, res) => {
+            try {
+                const email = req.query.email;
+                const query = { email: email }
+                const result = await userCollection.findOne(query);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot Admin" })
+            }
+        })
+        app.get('/checkseller', verifyJWT, async (req, res) => {
+            try {
+                const email = req.query.email;
+                const query = { email: email }
+                const result = await userCollection.findOne(query);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot Seller" })
+            }
+        })
+
+        app.get('/checkbuyer', verifyJWT, async (req, res) => {
+            try {
+                const email = req.query.email;
+                const query = { email: email }
+                const result = await userCollection.findOne(query);
+                res.send(result)
+            }
+            catch {
+                res.send({ status: false, message: "cannot Seller" })
             }
         })
         app.get('/mybooking', verifyJWT, verifyBuyer, async (req, res) => {
@@ -367,7 +401,7 @@ async function run() {
                 res.send(result)
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot booking" })
             }
         })
         app.put('/verifyuser', verifyJWT, verifyAdmin, async (req, res) => {
@@ -384,7 +418,7 @@ async function run() {
                 res.send(result)
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot verify user" })
             }
         })
         app.put('/makeadmin', verifyJWT, verifyAdmin, async (req, res) => {
@@ -422,7 +456,7 @@ async function run() {
                 res.send(result)
             }
             catch {
-                res.send({ status: false, message: "cannot insert user" })
+                res.send({ status: false, message: "cannot Advertise product" })
             }
         })
 
