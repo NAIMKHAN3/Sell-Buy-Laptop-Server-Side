@@ -8,9 +8,13 @@ const port = process.env.PORT || 5000;
 const jwt = require("jsonwebtoken")
 const token = process.env.ACCESS_TOKEN;
 
+const corsOptions = {
+    origin: '*',
+    Credentials: true,
+    optionSuccessStatus: 200,
+}
 
-
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -184,7 +188,7 @@ async function run() {
             const email = req.query.email;
             const user = await userCollection.findOne({ email: email })
             if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '7d' })
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN)
                 res.send({ token })
             }
             else {
